@@ -35,7 +35,7 @@ def preprocess_image(img, size=(224, 224)):
 
     # 3: Normalize pixel values to range [0, 1]
     # IMPORTANT: Do this IN-PLACE if possible
-    # img = ?
-    img /= 255.0
+    # Optimization: Multiplication is slightly faster than division
+    img *= 0.00392156862745098  # 1/255.0
 
     return img

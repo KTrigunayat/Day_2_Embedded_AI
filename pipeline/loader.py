@@ -28,16 +28,16 @@ def load_image_paths(folder):
     # 3. Construct full file paths
     # 4. Append to image_paths list
     
-    if not os.path.exists(folder):
+    args = []
+    if os.path.exists(folder):
+        valid_extensions = {'.jpg', '.jpeg', '.png', '.bmp', '.tiff'}
+        # Optimization: os.scandir is faster than os.listdir as it avoids extra stat calls
+        with os.scandir(folder) as entries:
+            for entry in entries:
+                if entry.is_file() and os.path.splitext(entry.name)[1].lower() in valid_extensions:
+                    image_paths.append(entry.path)
+    else:
         print(f"Warning: Folder '{folder}' does not exist.")
-        return image_paths
-
-    valid_extensions = ('.jpg', '.jpeg', '.png', '.bmp', '.tiff')
-    
-    for filename in os.listdir(folder):
-        if filename.lower().endswith(valid_extensions):
-            full_path = os.path.join(folder, filename)
-            image_paths.append(full_path)
 
     return image_paths
 

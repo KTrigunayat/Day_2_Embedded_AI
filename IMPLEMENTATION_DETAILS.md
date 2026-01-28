@@ -26,6 +26,7 @@ This document details the architectural decisions and answers the specific quest
 ### **Code Implementation**
 - **Lazy Discovery**: `load_image_paths` only collects file strings, not pixel data.
 - **On-Demand Reading**: `read_image` loads a singe file from disk using OpenCV only when correctly requested.
+- **Optimization (v2)**: Replaced `os.listdir` with **`os.scandir`**. This is significantly faster on large datasets because it retrieves file attributes (like `is_file()`) from the directory entry itself, avoiding strictly necessary system calls for every file.
 
 ### **Q&A from Docstrings**
 **Q: Why is this better for edge devices? (Returning paths instead of images)**
@@ -43,7 +44,8 @@ This document details the architectural decisions and answers the specific quest
 ### **Code Implementation**
 - **Early Resizing**: `cv2.resize` is called *first*.
 - **Float32 Selection**: Explicit `.astype(np.float32)`.
-- **In-Place Normalization**: `img /= 255.0` modifies the array in memory without creating a copy.
+- **In-Place Normalization**: Uses in-place operations to modify the array in memory without creating a copy.
+- **Optimization (v2)**: Replaced division (`/ 255.0`) with **multiplication** (`* 0.00392...`). CPU multiplication instructions are typically faster than division instructions on ARM architectures (Jetson/Pi).
 
 ### **Q&A from Docstrings**
 **Q: Why resize first?**
@@ -64,8 +66,10 @@ This document details the architectural decisions and answers the specific quest
 ## 4. Streaming (`pipeline/stream.py`)
 
 ### **Code Implementation**
-- **Generator Pattern**: Uses the `yield` keyword to produce one processed frame at a time.
-- **Error Handling**: Checks `if img is None` and continues, preventing pipeline crashes on bad files.
+- **Prefetching (Threaded)**: Implemented a **Producer-Consumer** pattern using `threading` and `queue.Queue`.
+    *   **Main Thread**: Runs inference loop (simulated).
+    *   **Background Thread**: Loads and preprocesses the *next* images while the main thread works on the *current* image.
+- **Benefits**: This hides the latency of disk I/O. On Edge devices with slow SD cards, this often yields a 20-50% FPS boost.
 
 ### **Q&A from Docstrings**
 **Q: Constraints: Do NOT return a list. Do NOT load all images at once.**

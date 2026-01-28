@@ -31,7 +31,9 @@ for img in stream:
     fps_val = fps.update()
     mem = system_stats()
 
-    print(f"Frame processed | FPS: {fps_val:.2f} | Mem(MB): {mem:.2f}")
+    # Optimization: Reduce print frequency to save I/O overhead
+    if fps.frames % 10 == 0:
+        print(f"Frame processed | FPS: {fps_val:.2f} | Mem(MB): {mem:.2f}\r", end="")
 
     # TODO (Optional):
     # - Display image using OpenCV
