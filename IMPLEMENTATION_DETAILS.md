@@ -11,13 +11,12 @@ This document details the architectural decisions and answers the specific quest
 
 ### **Q&A from Docstrings**
 **Q: Why do we care about memory on Jetson?**
-*   **A**: Edge devices like the Jetson Nano or Orin Nano typically have limited shared memory (Unified Memory Architecture), often just 4GB or 8GB shared between CPU and GPU. If the application hogs memory, it leaves less for the OS and the model inference, leading to significant slowdowns or crashes.
-
+*   **A**: Edge devices like the Jetson Nano or Orin Nano typically have limited shared memory, often just 4GB or 8GB shared between CPU and GPU. Hence, we need to optimize the memory usage on edge AI devices to be able to utilize the memory perfectly. Hence, we also check regularly the amount of memory in use in order to prevent over heating and other isssues that might arise because of the excessive memory usage.
 **Q: What happens if we cross 3.5 GB RAM?**
-*   **A**: On a 4GB device (like a standard Jetson Nano), the OS and background processes consume ~0.5-1GB. Crossing ~3.5GB usually triggers the Linux OOM (Out Of Memory) killer, which will abruptly terminate the process to save the system, or cause heavy "thrashing" (swapping to slow SD card storage), making the device unresponsive.
+*   **A**: The Jetson Orin Nano board that we have has around 4 GB of RAM, out of which some memory will be used for running the basic OS programs, if we exceed the memory usage above 3.5 GB, it can lead to the issues in performance and latency and it might have to shutdown some background tasks to run the application, making it difficuilt for the jetson board to function.
 
 **Q: Why use elapsed time instead of counting per second?**
-*   **A**: Counting frames per second strictly (resetting every second) can be noisy if frame times vary. Calculating FPS as `total_frames / total_elapsed_time` gives a precise moving average that represents the true throughput of the system over time.
+*   **A**: Counting per second increases the need for running an extra process continuously and storage of data values at every time stamp is again an issue, hence, we prefer batch processing on edge AI devices and hence when we calculate the elapsed time, we are not storing data every second, instead in batches.
 
 ---
 
@@ -30,7 +29,7 @@ This document details the architectural decisions and answers the specific quest
 
 ### **Q&A from Docstrings**
 **Q: Why is this better for edge devices? (Returning paths instead of images)**
-*   **A**: Loading a dataset of even moderate size (e.g., 1000 images @ 1MB each = 1GB) would instantly consume a quarter of the device's RAM. Storing strings (paths) takes negligible memory, allowing us to scale to millions of images without crashing.
+*   **A**: Loading a dataset of even moderate size would instantly consume a quarter of the device's RAM. Storing strings (paths) takes negligible memory, allowing us to scale to millions of images without crashing.
 
 **Q: Why should reading be separate from preprocessing?**
 *   **A**:
