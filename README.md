@@ -1,1 +1,0 @@
-# Day_2_Embedded_AI
